@@ -1,0 +1,108 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: auth_service_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: school_db
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
+      
+      rabbitmq:
+        image: rabbitmq:3.12-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        options: >-
+          --health-cmd "rabbitmq-diagnostics ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5672:5672
+          - 15672:15672
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Java 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'backend/auth-service-node/package-lock.json'
+    
+    - name: Wait for services to be ready
+      run: |
+        for i in {1..30}; do
+          nc -zv localhost 5432 && echo "PostgreSQL is ready" && break || echo "Waiting for PostgreSQL...";
+          nc -zv localhost 3306 && echo "MySQL is ready" && break || echo "Waiting for MySQL...";
+          nc -zv localhost 5672 && echo "RabbitMQ is ready" && break || echo "Waiting for RabbitMQ...";
+          sleep 2;
+        done
+    
+    - name: Setup PostgreSQL database
+      env:
+        PGPASSWORD: postgres
+      run: |
+        psql -h localhost -U postgres -d auth_service_db -c "CREATE EXTENSION IF NOT EXISTS uuid-ossp;"
+    
+    - name: Build Auth Service
+      working-directory: backend/auth-service-node
+      run: |
+        npm ci
+        npx prisma generate
+        npm run build
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/auth_service_db
+    
+    - name: Build Java Services
+      run: |
+        for service in api-gateway config-server courses-service eureka-server quiz-service student-service; do
+          echo "Building $service..."
+          cd backend/$service
+          mvn clean package -DskipTests
+          cd ../../
+        done
+    
+    - name: Run smoke tests
+      run: |
+        echo "Integration tests would run here"
+        echo "Services should be verified with their health endpoints"

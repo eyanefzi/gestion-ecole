@@ -1,0 +1,79 @@
+name: Backend Node.js CI
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths:
+      - 'backend/auth-service-node/**'
+      - '.github/workflows/backend-nodejs-ci.yml'
+  pull_request:
+    branches: [ master, develop ]
+    paths:
+      - 'backend/auth-service-node/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: auth_service_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'backend/auth-service-node/package-lock.json'
+    
+    - name: Install dependencies
+      working-directory: backend/auth-service-node
+      run: npm ci
+    
+    - name: Generate Prisma Client
+      working-directory: backend/auth-service-node
+      run: npx prisma generate
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/auth_service_db
+    
+    - name: Run database migrations
+      working-directory: backend/auth-service-node
+      run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/auth_service_db
+    
+    - name: Build TypeScript
+      working-directory: backend/auth-service-node
+      run: npm run build
+    
+    - name: Check code quality with ESLint (if available)
+      working-directory: backend/auth-service-node
+      run: npm run lint 2>/dev/null || echo "ESLint not configured"
+    
+    - name: Upload build artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: auth-service-artifacts
+        path: backend/auth-service-node/dist/
+        retention-days: 5
+    
+    - name: Docker Build
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      working-directory: backend/auth-service-node
+      run: |
+        docker build -t auth-service:${{ github.sha }} .

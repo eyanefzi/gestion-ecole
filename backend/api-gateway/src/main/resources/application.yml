@@ -1,0 +1,149 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/microservices
+          jwk-set-uri: http://keycloak:8080/realms/microservices/protocol/openid-connect/certs
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service-node
+          predicates:
+            - Path=/api/auth/**
+
+        - id: courses-service
+          uri: lb://courses-service
+          predicates:
+            - Path=/api/courses/**
+
+        # Route de compatibilité frontend (courses-service/courses)
+        - id: courses-service-compat
+          uri: lb://courses-service
+          predicates:
+            - Path=/courses-service/**
+          filters:
+            - RewritePath=/courses-service/(?<segment>.*), /${segment}
+
+        # Swagger for courses-service
+        - id: courses-service-swagger
+          uri: lb://courses-service
+          predicates:
+            - Path=/courses-service/v3/api-docs
+          filters:
+            - RewritePath=/courses-service/v3/api-docs, /v3/api-docs
+
+        - id: students-service
+          uri: lb://students-service
+          predicates:
+            - Path=/api/students/**
+
+        # Route de compatibilité frontend (students-service/students)
+        - id: students-service-compat
+          uri: lb://students-service
+          predicates:
+            - Path=/students-service/**
+          filters:
+            - RewritePath=/students-service/(?<segment>.*), /${segment}
+
+        # Swagger for students-service
+        - id: students-service-swagger
+          uri: lb://students-service
+          predicates:
+            - Path=/students-service/v3/api-docs
+          filters:
+            - RewritePath=/students-service/v3/api-docs, /v3/api-docs
+
+        - id: enrollments-service
+          uri: lb://students-service
+          predicates:
+            - Path=/api/enrollments/**
+          filters:
+            - RewritePath=/api/enrollments, /api/students/enrollments
+
+        - id: quiz-service
+          uri: lb://quiz-service
+          predicates:
+            - Path=/api/quizzes/**
+
+        # Route de compatibilité frontend (quiz-service/api/quizzes)
+        - id: quiz-service-compat
+          uri: lb://quiz-service
+          predicates:
+            - Path=/quiz-service/**
+          filters:
+            - RewritePath=/quiz-service/(?<segment>.*), /${segment}
+
+        # Swagger for quiz-service
+        - id: quiz-service-swagger
+          uri: lb://quiz-service
+          predicates:
+            - Path=/quiz-service/v3/api-docs
+          filters:
+            - RewritePath=/quiz-service/v3/api-docs, /v3/api-docs
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "http://localhost:4200"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+    ip-address: 127.0.0.1
+
+# SpringDoc OpenAPI Configuration (Centralized Swagger)
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - name: courses-service
+        url: /courses-service/v3/api-docs
+      - name: students-service
+        url: /students-service/v3/api-docs
+
+      - name: quiz-service
+        url: /quiz-service/v3/api-docs
+  api-docs:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true

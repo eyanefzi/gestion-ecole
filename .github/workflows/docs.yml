@@ -1,0 +1,83 @@
+name: Documentation & Format
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ master, develop ]
+    paths:
+      - '**.md'
+
+jobs:
+  check-documentation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check markdown formatting
+      uses: nosborn/github-action-markdown-cli@v3.3.0
+      with:
+        files: .
+        config_file: .markdownlint.json
+      continue-on-error: true
+    
+    - name: Validate README exists
+      run: |
+        [ -f "README.md" ] || (echo "Root README.md is missing" && exit 1)
+        [ -f "backend/README.md" ] || (echo "Backend README.md is missing" && exit 1)
+        [ -f "frontend/README.md" ] || (echo "Frontend README.md is missing" && exit 1)
+      continue-on-error: true
+    
+    - name: Check for documentation in services
+      run: |
+        for service in backend/*/; do
+          if [ -d "$service" ] && [ -f "$service/pom.xml" ] || [ -f "$service/package.json" ]; then
+            echo "Checking $service..."
+            [ -f "$service/README.md" ] || echo "Warning: Missing README in $service"
+          fi
+        done
+
+  format-code:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install prettier
+      run: npm install -g prettier
+    
+    - name: Format code with prettier
+      run: |
+        prettier --write "frontend/**/*.{ts,js,json,html,css}" \
+                         "backend/auth-service-node/**/*.{ts,js,json}" \
+                         "**/*.md" \
+                         --ignore-path .prettierignore || true
+    
+    - name: Commit and push if changes were made
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        if git diff --quiet; then
+          echo "No changes to commit"
+        else
+          git add -A
+          git commit -m "style: format code with prettier"
+          git push
+        fi

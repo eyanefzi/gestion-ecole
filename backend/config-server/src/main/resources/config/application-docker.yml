@@ -1,0 +1,8 @@
+# Configuration Docker pour tous les services
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:localhost}

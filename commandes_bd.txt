@@ -1,0 +1,33 @@
+
+docker compose up -d
+
+
+=== POSTGRESQL ===
+
+# Lister les tables de chaque base
+docker exec -it postgres-db psql -U postgres -d auth_service_db -c "\dt"
+docker exec -it postgres-db psql -U postgres -d quiz_db -c "\dt"
+docker exec -it postgres-db psql -U postgres -d keycloak_db -c "\dt"
+
+# Voir le contenu des tables - auth_service_db
+docker exec -it postgres-db psql -U postgres -d auth_service_db -c "SELECT * FROM users;"
+docker exec -it postgres-db psql -U postgres -d auth_service_db -c "SELECT * FROM _prisma_migrations;"
+
+# Voir le contenu des tables - quiz_db
+docker exec -it postgres-db psql -U postgres -d quiz_db -c "SELECT * FROM quizzes;"
+docker exec -it postgres-db psql -U postgres -d quiz_db -c "SELECT * FROM questions;"
+docker exec -it postgres-db psql -U postgres -d quiz_db -c "SELECT * FROM quiz_attempts;"
+
+
+=== MYSQL ===
+
+# Lister les tables de chaque base
+docker exec -it mysql-db mysql -u root -prootpassword -e "USE courses_db; SHOW TABLES;"
+docker exec -it mysql-db mysql -u root -prootpassword -e "USE students_db; SHOW TABLES;"
+
+# Voir le contenu des tables - courses_db
+docker exec -it mysql-db mysql -u root -prootpassword -e "USE courses_db; SELECT * FROM courses;"
+docker exec -it mysql-db mysql -u root -prootpassword -e "USE courses_db; SELECT * FROM categories;"
+
+# Voir le contenu des tables - students_db
+docker exec -it mysql-db mysql -u root -prootpassword -e "USE students_db; SHOW TABLES;"

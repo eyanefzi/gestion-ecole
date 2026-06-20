@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'release-*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"%h - %s" > CHANGELOG.md || echo "# Changelog for ${{ steps.version.outputs.VERSION }}" > CHANGELOG.md
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat CHANGELOG.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Release Notes
+      run: |
+        echo "# Release ${{ steps.version.outputs.VERSION }}" > release-notes.md
+        echo "" >> release-notes.md
+        echo "## Changes" >> release-notes.md
+        cat CHANGELOG.md >> release-notes.md
+        echo "" >> release-notes.md
+        echo "## Build Information" >> release-notes.md
+        echo "- Git Commit: ${{ github.sha }}" >> release-notes.md
+        echo "- Build Date: $(date)" >> release-notes.md
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release-notes.md
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.VERSION, 'alpha') || contains(steps.version.outputs.VERSION, 'beta') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+      if: secrets.DOCKER_USERNAME != ''
+    
+    - name: Push Release Tags to Container Registries
+      run: |
+        docker pull ghcr.io/${{ github.repository }}/api-gateway:latest
+        docker tag ghcr.io/${{ github.repository }}/api-gateway:latest ghcr.io/${{ github.repository }}/api-gateway:${{ steps.version.outputs.VERSION }}
+        docker push ghcr.io/${{ github.repository }}/api-gateway:${{ steps.version.outputs.VERSION }}
+      continue-on-error: true

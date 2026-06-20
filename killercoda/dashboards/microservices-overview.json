@@ -1,0 +1,233 @@
+{
+  "id": null,
+  "uid": "microservices-overview",
+  "title": "Microservices Overview",
+  "tags": ["microservices"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Services UP",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "UP", "color": "green" }, "0": { "text": "DOWN", "color": "red" } } }
+          ]
+        }
+      },
+      "targets": [
+        {
+          "expr": "up{job=\"api-gateway\"}",
+          "legendFormat": "API Gateway",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Services Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 20, "x": 4, "y": 0 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "UP" }, "0": { "text": "DOWN" } } }
+          ]
+        }
+      },
+      "targets": [
+        { "expr": "up{job=\"student-service\"}", "legendFormat": "Student", "refId": "A" },
+        { "expr": "up{job=\"courses-service\"}", "legendFormat": "Courses", "refId": "B" },
+
+        { "expr": "up{job=\"quiz-service\"}", "legendFormat": "Quiz", "refId": "E" },
+        { "expr": "up{job=\"auth-service-node\"}", "legendFormat": "Auth (Node)", "refId": "F" },
+        { "expr": "up{job=\"eureka-server\"}", "legendFormat": "Eureka", "refId": "G" },
+        { "expr": "up{job=\"config-server\"}", "legendFormat": "Config", "refId": "H" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "HTTP Request Rate (req/s) — All Services",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"api-gateway\"}[1m]))", "legendFormat": "API Gateway", "refId": "A" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"student-service\"}[1m]))", "legendFormat": "Student", "refId": "B" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"courses-service\"}[1m]))", "legendFormat": "Courses", "refId": "C" },
+
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"quiz-service\"}[1m]))", "legendFormat": "Quiz", "refId": "F" },
+        { "expr": "sum(rate(http_requests_total{job=\"auth-service-node\"}[1m]))", "legendFormat": "Auth (Node)", "refId": "G" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "HTTP Error Rate (5xx) — All Services",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"student-service\",status=~\"5..\"}[1m]))", "legendFormat": "Student 5xx", "refId": "A" },
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"courses-service\",status=~\"5..\"}[1m]))", "legendFormat": "Courses 5xx", "refId": "B" },
+
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"quiz-service\",status=~\"5..\"}[1m]))", "legendFormat": "Quiz 5xx", "refId": "E" },
+        { "expr": "sum(rate(http_requests_total{job=\"auth-service-node\",status_code=~\"5..\"}[1m]))", "legendFormat": "Auth 5xx", "refId": "F" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "JVM Heap Memory Used",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"student-service\"}", "legendFormat": "Student Heap", "refId": "A" },
+        { "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"courses-service\"}", "legendFormat": "Courses Heap", "refId": "B" },
+
+        { "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"quiz-service\"}", "legendFormat": "Quiz Heap", "refId": "E" },
+        { "expr": "jvm_memory_used_bytes{area=\"heap\",job=\"api-gateway\"}", "legendFormat": "API Gateway Heap", "refId": "F" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Node.js Memory (Auth Service)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "nodejs_heap_size_used_bytes{job=\"auth-service-node\"}", "legendFormat": "Heap Used", "refId": "A" },
+        { "expr": "nodejs_heap_size_total_bytes{job=\"auth-service-node\"}", "legendFormat": "Heap Total", "refId": "B" },
+        { "expr": "nodejs_external_memory_bytes{job=\"auth-service-node\"}", "legendFormat": "External", "refId": "C" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "JVM CPU Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "process_cpu_usage{job=\"student-service\"}", "legendFormat": "Student", "refId": "A" },
+        { "expr": "process_cpu_usage{job=\"courses-service\"}", "legendFormat": "Courses", "refId": "B" },
+
+        { "expr": "process_cpu_usage{job=\"quiz-service\"}", "legendFormat": "Quiz", "refId": "E" },
+        { "expr": "process_cpu_usage{job=\"api-gateway\"}", "legendFormat": "API Gateway", "refId": "F" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "HTTP P95 Response Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"student-service\"}[5m])) by (le))", "legendFormat": "Student p95", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"courses-service\"}[5m])) by (le))", "legendFormat": "Courses p95", "refId": "B" },
+
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"quiz-service\"}[5m])) by (le))", "legendFormat": "Quiz p95", "refId": "E" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"auth-service-node\"}[5m])) by (le))", "legendFormat": "Auth p95", "refId": "F" }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "JVM Active Threads",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "jvm_threads_live_threads{job=\"student-service\"}", "legendFormat": "Student", "refId": "A" },
+        { "expr": "jvm_threads_live_threads{job=\"courses-service\"}", "legendFormat": "Courses", "refId": "B" },
+
+        { "expr": "jvm_threads_live_threads{job=\"quiz-service\"}", "legendFormat": "Quiz", "refId": "E" },
+        { "expr": "jvm_threads_live_threads{job=\"api-gateway\"}", "legendFormat": "API Gateway", "refId": "F" }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Node.js Event Loop Lag",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "nodejs_eventloop_lag_seconds{job=\"auth-service-node\"}", "legendFormat": "Event Loop Lag", "refId": "A" },
+        { "expr": "nodejs_eventloop_lag_p99_seconds{job=\"auth-service-node\"}", "legendFormat": "Event Loop Lag p99", "refId": "B" }
+      ]
+    }
+  ]
+}

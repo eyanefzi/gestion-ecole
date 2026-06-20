@@ -1,0 +1,22 @@
+=== URLS DES SERVICES ===
+
+Frontend Angular     → http://localhost:4200
+API Gateway          → http://localhost:8080
+Eureka Server        → http://localhost:8761
+Config Server        → http://localhost:8888
+Keycloak Admin       → http://localhost:9090  (admin / admin)
+RabbitMQ Management  → http://localhost:15672  (guest / guest)
+Prometheus           → http://localhost:9091
+Grafana              → http://localhost:3002   (admin / admin)
+Zipkin               → http://localhost:9411
+
+=== SWAGGER ===
+
+Courses Service      → http://localhost:8082/swagger-ui.html
+Student Service      → http://localhost:8083/swagger-ui.html
+Quiz Service         → http://localhost:8086/swagger-ui.html
+
+=== BASES DE DONNEES ===
+
+PostgreSQL           → localhost:5432  (postgres / postgres)
+MySQL                → localhost:3306  (root / rootpassword)

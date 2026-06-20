@@ -1,0 +1,48 @@
+.app {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0f1629 0%, #1a1f3a 100%);
+}
+
+.main-app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+}
+
+.access-denied {
+  margin-left: 280px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.access-denied h2 {
+  margin: 0 0 16px 0;
+  font-size: 32px;
+  color: white;
+}
+
+.access-denied p {
+  margin: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 1024px) {
+  .access-denied {
+    margin-left: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .access-denied {
+    margin-left: 0;
+  }
+}
