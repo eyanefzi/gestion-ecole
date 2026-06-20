@@ -336,8 +336,3 @@ docker system prune -a --volumes
 df -h /Volumes/ADATA\ SC740/
 ```
 
-## 📄 License
-Projet éducatif - 4SAE Microservices
-
-## 👨‍💻 Auteur
-Équipe Microservices 2024
