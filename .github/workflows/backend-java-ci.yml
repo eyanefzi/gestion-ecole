@@ -63,12 +63,3 @@ jobs:
         path: backend/${{ matrix.service }}/target/*.jar
         retention-days: 5
     
-    - name: SonarQube Scan (Optional)
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-      run: |
-        cd backend/${{ matrix.service }}
-        mvn sonar:sonar \
-          -Dsonar.projectKey=${{ matrix.service }} \
-          -Dsonar.sources=src \
-          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }} || true
