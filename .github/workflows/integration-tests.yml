@@ -82,7 +82,7 @@ jobs:
       env:
         PGPASSWORD: postgres
       run: |
-        psql -h localhost -U postgres -d auth_service_db -c "CREATE EXTENSION IF NOT EXISTS uuid-ossp;"
+        psql -h localhost -U postgres -d auth_service_db -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
     
     - name: Build Auth Service
       working-directory: backend/auth-service-node
