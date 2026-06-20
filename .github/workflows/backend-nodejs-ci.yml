@@ -2,12 +2,12 @@ name: Backend Node.js CI
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ main, master, develop ]
     paths:
       - 'backend/auth-service-node/**'
       - '.github/workflows/backend-nodejs-ci.yml'
   pull_request:
-    branches: [ master, develop ]
+    branches: [ main, master, develop ]
     paths:
       - 'backend/auth-service-node/**'
 
@@ -73,7 +73,7 @@ jobs:
         retention-days: 5
     
     - name: Docker Build
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
       working-directory: backend/auth-service-node
       run: |
         docker build -t auth-service:${{ github.sha }} .

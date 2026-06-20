@@ -2,7 +2,7 @@ name: Docker Build & Push
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
     paths:
       - 'backend/**'
       - 'frontend/**'
@@ -69,7 +69,7 @@ jobs:
       with:
         context: .
         file: ./backend/${{ matrix.service }}/Dockerfile
-        push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
@@ -81,7 +81,7 @@ jobs:
       with:
         context: ./frontend
         file: ./frontend/Dockerfile
-        push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha

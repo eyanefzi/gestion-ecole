@@ -2,13 +2,13 @@ name: Documentation & Format
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main, develop ]
     paths:
       - '**.md'
       - 'docs/**'
       - '.github/workflows/docs.yml'
   pull_request:
-    branches: [ master, develop ]
+    branches: [ main, master, develop ]
     paths:
       - '**.md'
 
